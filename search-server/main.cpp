@@ -405,7 +405,7 @@ void TestSortByRelevation() {
     server.AddDocument(2, content2, DocumentStatus::ACTUAL, ratings);
     server.AddDocument(3, content3, DocumentStatus::ACTUAL, ratings);
     const auto found_docs = server.FindTopDocuments("cat played who win"s);
-    ASSERT_EQUAL(found_docs[0].relevance, relevance3);
+    ASSERT(found_docs[0].relevance - relevance3 < EQUAL_MAX_DIFFERENCE);
     ASSERT(found_docs[1].relevance - relevance2 < EQUAL_MAX_DIFFERENCE);
     ASSERT(found_docs[2].relevance - relevance1 < EQUAL_MAX_DIFFERENCE);
 }
