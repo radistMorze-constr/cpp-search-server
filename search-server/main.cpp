@@ -351,6 +351,7 @@ void TestExcludeDocumentsWithMinusWords() {
     ASSERT(server1.FindTopDocuments("cat -city"s).empty());
     server2.AddDocument(doc_id, content2, DocumentStatus::ACTUAL, ratings);
     const auto found_docs = server2.FindTopDocuments("cat -city"s);
+    ASSERT(!found_docs.empty());
     ASSERT_EQUAL_HINT(found_docs[0].id, doc_id, "The document without minus-word isn't found"s);
 }
 
@@ -394,7 +395,7 @@ void TestMatchDocuments() {
 //Сортировака по релевантности
 void TestSortByRelevation() {
     const string content1 = "cat in the city which is placed on the other side"s;
-    double relevance1 = log(1)/11;
+    double relevance1 = log(1) / 11;
     const string content2 = "cat played in the garage"s;
     double relevance2 = 0.2 * log(1) + 0.2 * log(3);
     const string content3 = "cat vs dog who win"s;
@@ -405,9 +406,8 @@ void TestSortByRelevation() {
     server.AddDocument(2, content2, DocumentStatus::ACTUAL, ratings);
     server.AddDocument(3, content3, DocumentStatus::ACTUAL, ratings);
     const auto found_docs = server.FindTopDocuments("cat played who win"s);
-    ASSERT(found_docs[0].relevance - relevance3 < EQUAL_MAX_DIFFERENCE);
-    ASSERT(found_docs[1].relevance - relevance2 < EQUAL_MAX_DIFFERENCE);
-    ASSERT(found_docs[2].relevance - relevance1 < EQUAL_MAX_DIFFERENCE);
+    ASSERT(found_docs[0].relevance > found_docs[1].relevance);
+    ASSERT(found_docs[1].relevance > found_docs[2].relevance);
 }
 
 //Корректно считается рейтинг
@@ -460,28 +460,33 @@ void TestFilterPredicate() {
 void TestSearchDocumentsByStatus() {
     const string content = "cat vs dog who win"s;
     const vector<int> ratings = { 1, 2, 3 };
+    {
+        SearchServer server;
+        server.AddDocument(1, content, DocumentStatus::ACTUAL, ratings);
+        server.AddDocument(2, content, DocumentStatus::BANNED, ratings);
+        server.AddDocument(3, content, DocumentStatus::IRRELEVANT, ratings);
+        server.AddDocument(4, content, DocumentStatus::REMOVED, ratings);
+        auto found_docs = server.FindTopDocuments("cat"s, DocumentStatus::ACTUAL);
+        ASSERT_EQUAL(found_docs[0].id, 1);
+        found_docs = server.FindTopDocuments("cat"s, DocumentStatus::BANNED);
+        ASSERT_EQUAL(found_docs[0].id, 2);
+        found_docs = server.FindTopDocuments("cat"s, DocumentStatus::IRRELEVANT);
+        ASSERT_EQUAL(found_docs[0].id, 3);
+        found_docs = server.FindTopDocuments("cat"s, DocumentStatus::REMOVED);
+        ASSERT_EQUAL(found_docs[0].id, 4);
+    }
     SearchServer server;
     server.AddDocument(1, content, DocumentStatus::ACTUAL, ratings);
-    server.AddDocument(2, content, DocumentStatus::BANNED, ratings);
     server.AddDocument(3, content, DocumentStatus::IRRELEVANT, ratings);
     server.AddDocument(4, content, DocumentStatus::REMOVED, ratings);
-    auto found_docs = server.FindTopDocuments("cat"s, DocumentStatus::ACTUAL);
-    ASSERT_EQUAL(found_docs[0].id, 1);
-    found_docs = server.FindTopDocuments("cat"s, DocumentStatus::BANNED);
-    ASSERT_EQUAL(found_docs[0].id, 2);
-    found_docs = server.FindTopDocuments("cat"s, DocumentStatus::IRRELEVANT);
-    ASSERT_EQUAL(found_docs[0].id, 3);
-    found_docs = server.FindTopDocuments("cat"s, DocumentStatus::REMOVED);
-    ASSERT_EQUAL(found_docs[0].id, 4);
-    //Проверка на поиск документа с несуществующим статусом
-    found_docs = server.FindTopDocuments("cat"s, static_cast<DocumentStatus>(10));
+    auto found_docs = server.FindTopDocuments("cat"s, DocumentStatus::BANNED);
     ASSERT(found_docs.empty());
 }
 
 //Правильно считает реливантность
 void TestCorrectCalculationRelevation() {
     const string content1 = "белый кот и модный ошейник"s; //tf-idf = 0.1014
-    double relevance1 = 0.25 * log(1.5);
+    double relevance1 = 0.2 * log(1.5);
     const string content2 = "пушистый кот пушистый хвост"s; //tf-idf = 0.6507
     const double relevance2 = 0.5 * log(3) + 0.25 * log(1.5);
     const string content3 = "ухоженный пёс выразительные глаза"s; //tf-idf = 0.2746
@@ -493,9 +498,9 @@ void TestCorrectCalculationRelevation() {
     server.AddDocument(3, content3, DocumentStatus::ACTUAL, ratings);
     //Документы отсортированы в порядке убывания relevance: 2, 3, 1
     const auto found_docs = server.FindTopDocuments("пушистый ухоженный кот"s);
-    ASSERT(found_docs[0].relevance - relevance2 < EQUAL_MAX_DIFFERENCE);
-    ASSERT(found_docs[1].relevance - relevance3 < EQUAL_MAX_DIFFERENCE);
-    ASSERT(found_docs[2].relevance - relevance1 < EQUAL_MAX_DIFFERENCE);
+    ASSERT(abs(found_docs[0].relevance - relevance2) < EQUAL_MAX_DIFFERENCE);
+    ASSERT(abs(found_docs[1].relevance - relevance3) < EQUAL_MAX_DIFFERENCE);
+    ASSERT(abs(found_docs[2].relevance - relevance1) < EQUAL_MAX_DIFFERENCE);
 }
 
 // Функция TestSearchServer является точкой входа для запуска тестов
