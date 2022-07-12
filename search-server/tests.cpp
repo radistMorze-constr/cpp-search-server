@@ -59,7 +59,6 @@ void AssertImpl(bool value, const std::string& expr_str, const std::string& file
 
 // Тест проверяет создание сервера со стоп-словами из вектора
 void TestCreateServer() {
-    const int doc_id = 42;
     const std::string content = "и в на все предлоги"s;
     const std::vector<std::string> stop_words = {"и", "в", "на"};
     SearchServer server(stop_words);

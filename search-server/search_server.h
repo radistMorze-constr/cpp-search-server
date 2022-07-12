@@ -4,8 +4,12 @@
 #include <map>
 #include <numeric>
 #include <algorithm>
+#include <iterator>
+#include <cmath>
+
 #include "document.h"
 #include "string_processing.h"
+#include "log_duration.h"
 
 static const int MAX_RESULT_DOCUMENT_COUNT = 5;
 static const double EQUAL_MAX_DIFFERENCE = 1e-6;
@@ -53,7 +57,13 @@ public:
 
     int GetDocumentCount() const;
 
-    int GetDocumentId(int index) const;
+    std::vector<int>::const_iterator begin() const;
+
+    std::vector<int>::const_iterator end() const;
+
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+
+    void RemoveDocument(int document_id);
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 
@@ -63,6 +73,7 @@ private:
         DocumentStatus status;
     };
 
+    std::map <int, std::map<std::string, double>> document_to_word_freqs_;
     std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
     std::map<int, DocumentData> documents_;
@@ -104,6 +115,7 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 
 template <typename Filter>
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, Filter filter_function) const {
+    LOG_DURATION("Operation time");
     const Query query = ParseQuery(raw_query);
     auto matched_documents = FindAllDocuments(query, filter_function);
 
