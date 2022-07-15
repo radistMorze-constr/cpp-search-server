@@ -14,13 +14,6 @@
 static const int MAX_RESULT_DOCUMENT_COUNT = 5;
 static const double EQUAL_MAX_DIFFERENCE = 1e-6;
 
-enum class DocumentStatus {
-    ACTUAL,
-    IRRELEVANT,
-    BANNED,
-    REMOVED,
-};
-
 // Переопределение оператора вывода в поток для вектора
 template <typename type>
 std::ostream& operator<<(std::ostream& os, const std::vector<type>& data) {
@@ -57,9 +50,9 @@ public:
 
     int GetDocumentCount() const;
 
-    std::vector<int>::const_iterator begin() const;
+    std::set<int>::const_iterator begin() const;
 
-    std::vector<int>::const_iterator end() const;
+    std::set<int>::const_iterator end() const;
 
     const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
@@ -77,7 +70,7 @@ private:
     std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
     std::map<int, DocumentData> documents_;
-    std::vector<int> document_ids_;
+    std::set<int> document_ids_;
 
     bool IsStopWord(const std::string& word) const;
 
