@@ -2,11 +2,11 @@
 #include "search_server.h"
 
 void RemoveDuplicates(SearchServer& search_server) {
-	std::map<std::set<std::string>, int> doc_set_id;
+	std::map<std::set<std::string_view>, int> doc_set_id;
 	std::vector<int> id_for_remove;
 	for (const int document_id : search_server) {
 		auto words_in_document = search_server.GetWordFrequencies(document_id);
-		std::set<std::string> words;
+		std::set<std::string_view> words;
 		for (const auto& [word, freq] : words_in_document) {
 			words.insert(word);
 		}

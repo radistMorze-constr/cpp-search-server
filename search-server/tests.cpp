@@ -124,7 +124,7 @@ void TestMatchDocuments() {
         //Проверим что вернуться все совпадения, кроме стоп-слов
         auto matched_document = server.MatchDocument("cat is placed in the side home"s, 42);
         const auto [matched_words, doc_status] = matched_document;
-        std::vector<std::string> right_result = { "cat"s, "placed"s, "side"s };
+        std::vector<std::string_view> right_result = { "cat", "placed", "side" };
         ASSERT_EQUAL(matched_words, right_result);
         ASSERT(doc_status == DocumentStatus::ACTUAL);
     }
